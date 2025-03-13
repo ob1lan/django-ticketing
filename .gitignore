@@ -1,0 +1,29 @@
+# -----------------------
+#  Python
+# -----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+dist/
+build/
+
+# -----------------------
+#  Virtual Environments
+# -----------------------
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# -----------------------
+#  Django
+# -----------------------
+# SQLite database
+*.sqlite3
+
+# Migrations
+**/migrations/__pycache__/
+**/migrations/*.pyc
