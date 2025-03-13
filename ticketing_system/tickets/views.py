@@ -1,10 +1,21 @@
 from rest_framework import generics, permissions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter, SearchFilter
 from .models import Ticket, TicketHistory
 from .serializers import TicketSerializer, TicketHistorySerializer
+from .filters import TicketFilter
+
 
 class TicketListCreateView(generics.ListCreateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_class = TicketFilter
+    
+    # Optional DRF's ?search= queries
+    search_fields = ['title', 'description']
+    
+    ordering_fields = ['priority', 'status', 'created_at', 'updated_at']
 
     def get_queryset(self):
         user = self.request.user
@@ -23,6 +34,7 @@ class TicketListCreateView(generics.ListCreateAPIView):
             serializer.save(created_by=user)
         else:
             serializer.save(created_by=user, company=user.company)
+
 
 class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = TicketSerializer
@@ -53,6 +65,7 @@ class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
                 previous_status=old_status,
                 new_status=new_status
             )
+
 
 class TicketHistoryListView(generics.ListAPIView):
     serializer_class = TicketHistorySerializer
