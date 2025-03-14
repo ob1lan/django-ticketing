@@ -52,7 +52,7 @@ class Ticket(models.Model):
         on_delete=models.CASCADE
     )
     unique_reference = models.CharField(max_length=8, unique=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     @property
