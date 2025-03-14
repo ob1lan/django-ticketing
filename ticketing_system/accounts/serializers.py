@@ -1,11 +1,13 @@
 from rest_framework import serializers
 from .models import User
+from companies.models import Company
 
 class AdminUserSerializer(serializers.ModelSerializer):
     """
     For staff/admin usage. They can create users, set passwords, assign companies, etc.
     """
     password = serializers.CharField(write_only=True, required=False)
+    
 
     class Meta:
         model = User
@@ -15,6 +17,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'company',  # admin can select any company for a user
             'is_staff', 'is_active', 'password',
         ]
+        
+    def validate_company(self, value):
+        if not Company.objects.filter(id=value.id).exists():
+            raise serializers.ValidationError("Company does not exist.")
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)
