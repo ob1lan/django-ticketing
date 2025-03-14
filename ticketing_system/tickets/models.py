@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.db.models import Sum
 from django.conf import settings
 
 
@@ -57,9 +58,9 @@ class Ticket(models.Model):
     
     @property
     def total_time_spent(self):
-        return self.time_entries.aggregate(
-            models.Sum('minutes')
-        )['minutes__sum'] or 0
+        if not hasattr(self, '_cached_total_time'):
+            self._cached_total_time = self.time_entries.aggregate(Sum('minutes'))['minutes__sum'] or 0
+        return self._cached_total_time
 
     def save(self, *args, **kwargs):
         """
