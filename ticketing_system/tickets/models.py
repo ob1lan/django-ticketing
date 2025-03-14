@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
+
 
 class Ticket(models.Model):
     id = models.UUIDField(
@@ -54,6 +54,12 @@ class Ticket(models.Model):
     unique_reference = models.CharField(max_length=8, unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    @property
+    def total_time_spent(self):
+        return self.time_entries.aggregate(
+            models.Sum('minutes')
+        )['minutes__sum'] or 0
 
     def save(self, *args, **kwargs):
         """
@@ -91,7 +97,6 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        # For debugging/logging
         return f"Comment {self.id} by {self.author} on {self.ticket}"
 
 
@@ -104,3 +109,30 @@ class TicketHistory(models.Model):
 
     def __str__(self):
         return f"{self.ticket.unique_reference} | {self.previous_status} -> {self.new_status}"
+
+
+class TimeSpent(models.Model):
+    """
+    Model to store time spent on a ticket.
+    - operator: the staff user who spent the time
+    - ticket: reference to the associated Ticket
+    - minutes: number of minutes spent
+    - created_at, updated_at for auditing
+    """
+    id = models.BigAutoField(primary_key=True)
+    ticket = models.ForeignKey(
+        Ticket,
+        on_delete=models.CASCADE,
+        related_name='time_entries'
+    )
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='time_entries'
+    )
+    minutes = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"TimeSpent #{self.id} - {self.minutes} mins on {self.ticket}"

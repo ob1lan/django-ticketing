@@ -1,8 +1,9 @@
 from rest_framework import generics, permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
-from .models import Ticket, TicketHistory, Comment
-from .serializers import TicketSerializer, TicketHistorySerializer, CommentSerializer
+from rest_framework.exceptions import PermissionDenied
+from .models import Ticket, TicketHistory, Comment, TimeSpent
+from .serializers import TicketSerializer, TicketHistorySerializer, CommentSerializer, TimeSpentSerializer
 from .filters import TicketFilter
 
 
@@ -14,7 +15,6 @@ class TicketListCreateView(generics.ListCreateAPIView):
     
     # Optional DRF's ?search= queries
     search_fields = ['title', 'description']
-    
     ordering_fields = ['priority', 'status', 'created_at', 'updated_at']
 
     def get_queryset(self):
@@ -140,13 +140,12 @@ class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     """
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    lookup_url_kwarg = 'comment_id'
+    lookup_field = 'id'
 
     def get_queryset(self):
         user = self.request.user
-        # The comment id is passed in the URL as comment_id
-        # The ticket id is in pk
-        # We'll ensure the ticket belongs to the user's company (if not staff),
-        # and the comment belongs to that ticket.
         ticket_id = self.kwargs['pk']
         comment_id = self.kwargs['comment_id']
         if user.is_staff:
@@ -171,4 +170,68 @@ class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
         if not self.request.user.is_staff:
             if instance.author != self.request.user:
                 raise generics.exceptions.PermissionDenied("You cannot delete someone else's comment.")
+        instance.delete()
+
+
+class TimeSpentListCreateView(generics.ListCreateAPIView):
+    serializer_class = TimeSpentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        ticket_id = self.kwargs['pk']  # the ticket's UUID from URL
+
+        if user.is_staff:
+            # staff can see all time entries for the given ticket
+            return TimeSpent.objects.filter(ticket__id=ticket_id)
+        else:
+            # non-staff can only see time entries for tickets belonging to their company
+            return TimeSpent.objects.filter(
+                ticket__id=ticket_id,
+                ticket__company=user.company
+            )
+
+    def perform_create(self, serializer):
+        # Only staff can create time entries
+        if not self.request.user.is_staff:
+            raise PermissionDenied("Only staff can log time.")
+
+        ticket_id = self.kwargs['pk']
+        # verify ticket belongs to staff? staff can see all tickets anyway, but let's fetch:
+        ticket = Ticket.objects.get(id=ticket_id)
+        serializer.save(
+            ticket=ticket,
+            operator=self.request.user
+        )
+
+
+class TimeSpentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TimeSpentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    lookup_url_kwarg = 'time_id'
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        user = self.request.user
+        ticket_id = self.kwargs['pk']
+        time_id = self.kwargs['time_id']
+
+        if user.is_staff:
+            return TimeSpent.objects.filter(id=time_id, ticket__id=ticket_id)
+        else:
+            return TimeSpent.objects.filter(
+                id=time_id,
+                ticket__id=ticket_id,
+                ticket__company=user.company
+            )
+
+    def perform_update(self, serializer):
+        if not self.request.user.is_staff:
+            raise PermissionDenied("Only staff can update time entries.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if not self.request.user.is_staff:
+            raise PermissionDenied("Only staff can delete time entries.")
         instance.delete()

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Ticket, TicketHistory, Comment
+from .models import Ticket, TicketHistory, Comment, TimeSpent
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -17,7 +17,8 @@ class TicketSerializer(serializers.ModelSerializer):
             'created_by',
             'unique_reference',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'total_time_spent',
         ]
         read_only_fields = [
             'id',
@@ -25,6 +26,7 @@ class TicketSerializer(serializers.ModelSerializer):
             'unique_reference',
             'created_at',
             'updated_at',
+            'total_time_spent'
         ]
 
     def get_fields(self):
@@ -66,3 +68,20 @@ class CommentSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'author', 'ticket', 'created_at', 'updated_at']
+
+
+class TimeSpentSerializer(serializers.ModelSerializer):
+    operator_name = serializers.ReadOnlyField(source='operator.username')
+
+    class Meta:
+        model = TimeSpent
+        fields = [
+            'id',
+            'ticket',
+            'operator',
+            'operator_name',
+            'minutes',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'ticket', 'operator', 'created_at', 'updated_at']
