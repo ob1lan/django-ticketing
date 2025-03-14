@@ -3,6 +3,7 @@ from .views import (
     TicketListCreateView,
     TicketRetrieveUpdateView,
     TicketHistoryListView,
+    TicketHistoryRetrieveView,
     TicketCommentListCreateView,
     TicketCommentRetrieveUpdateDestroyView,
     TimeSpentListCreateView,
@@ -15,6 +16,7 @@ urlpatterns = [
     
     # History
     path('<uuid:pk>/history/', TicketHistoryListView.as_view(), name='ticket-history'),
+    path('<uuid:pk>/history/<int:history_id>/', TicketHistoryRetrieveView.as_view(), name='ticket-history-detail'),
     
     # Comments
     path('<uuid:pk>/comments/', TicketCommentListCreateView.as_view(), name='ticket-comments-list-create'),

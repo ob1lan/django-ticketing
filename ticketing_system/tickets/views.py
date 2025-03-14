@@ -101,12 +101,28 @@ class TicketHistoryListView(StaffOrCompanyFilterMixin, generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Start with all TicketHistory
-        queryset = TicketHistory.objects.all()
-        # Use the mixin to filter by ticket__id and staff vs. company
+        queryset = TicketHistory.objects.select_related('ticket')
         queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
-        # Order by changed_at or your preferred field
         return queryset.order_by('-changed_at')
+    
+
+class TicketHistoryRetrieveView(StaffOrCompanyFilterMixin, generics.RetrieveAPIView):
+    """
+    GET: retrieve a single TicketHistory entry.
+    Staff sees all, non-staff sees only if ticket.company == user.company.
+    """
+    serializer_class = TicketHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    lookup_url_kwarg = 'history_id'
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        queryset = TicketHistory.objects.all()
+        queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
+
+        history_id = self.kwargs['history_id']
+        return queryset.filter(id=history_id)
 
 
 # ----------------------------------------------------------------------------
@@ -125,9 +141,8 @@ class TicketCommentListCreateView(StaffOrCompanyFilterMixin, generics.ListCreate
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Comment.objects.all()
+        queryset = Comment.objects.select_related('ticket', 'author')
         queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
-        # Optionally order by created_at
         return queryset.order_by('created_at')
 
     def perform_create(self, serializer):
@@ -202,8 +217,7 @@ class TimeSpentListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIV
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = TimeSpent.objects.all()
-        # Use the mixin to filter by staff vs. non-staff
+        queryset = TimeSpent.objects.select_related('ticket', 'operator')
         queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
         return queryset.order_by('-created_at')
 
