@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from drf_spectacular.utils import extend_schema
 from .models import User
 from .serializers import (
     AdminUserSerializer,
@@ -6,6 +7,9 @@ from .serializers import (
 )
 
 
+@extend_schema(
+    description="Allows staff (is_staff=True) to list all users and create new ones."
+)
 class AdminUserListCreateView(generics.ListCreateAPIView):
     """
     Allows staff (is_staff=True) to list all users and create new ones.
@@ -16,6 +20,9 @@ class AdminUserListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAdminUser]
 
 
+@extend_schema(
+    description="Allows staff to retrieve or update a specific user by ID."
+)
 class AdminUserRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     """
     Allows staff to retrieve or update a specific user by ID.
@@ -25,6 +32,9 @@ class AdminUserRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAdminUser]
 
 
+@extend_schema(
+    description="Retrieves and updates the currently logged-in user's profile."
+)
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     Retrieves and updates the currently logged-in user's profile.

@@ -45,6 +45,9 @@ class TicketListCreateView(generics.ListCreateAPIView):
             serializer.save(created_by=user, company=user.company)
 
 
+@extend_schema(
+    description="Retrieve or update a single ticket. Staff users can see all tickets, while regular users see only tickets related to their company."
+)
 class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -76,6 +79,9 @@ class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             )
 
 
+@extend_schema(
+    description="Retrieve a list of status changes for a given ticket."
+)
 class TicketHistoryListView(generics.ListAPIView):
     serializer_class = TicketHistorySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -92,6 +98,9 @@ class TicketHistoryListView(generics.ListAPIView):
             )
 
 
+@extend_schema(
+    description="Retrieve a list of comments for a given ticket or create a new comment."
+)
 class TicketCommentListCreateView(generics.ListCreateAPIView):
     """
     - GET: list all comments for a given ticket
@@ -141,6 +150,9 @@ class TicketCommentListCreateView(generics.ListCreateAPIView):
         )
 
 
+@extend_schema(
+    description="Retrieve a single comment, update it, or delete it."
+)
 class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     - GET a single comment
@@ -182,6 +194,9 @@ class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
         instance.delete()
 
 
+@extend_schema(
+    description="Retrieve a list of time entries for a given ticket or create a new time entry."
+)
 class TimeSpentListCreateView(generics.ListCreateAPIView):
     serializer_class = TimeSpentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -214,6 +229,9 @@ class TimeSpentListCreateView(generics.ListCreateAPIView):
         )
 
 
+@extend_schema(
+    description="Retrieve a single time entry, update it, or delete it."
+)
 class TimeSpentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TimeSpentSerializer
     permission_classes = [permissions.IsAuthenticated]
