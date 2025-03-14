@@ -2,11 +2,13 @@ from rest_framework import generics, permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.exceptions import PermissionDenied
+from drf_spectacular.utils import extend_schema
 from .models import Ticket, TicketHistory, Comment, TimeSpent
 from .serializers import TicketSerializer, TicketHistorySerializer, CommentSerializer, TimeSpentSerializer
 from .filters import TicketFilter
 
 
+@extend_schema(description="List and create tickets")
 class TicketListCreateView(generics.ListCreateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]

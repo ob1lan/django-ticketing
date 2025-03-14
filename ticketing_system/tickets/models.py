@@ -103,7 +103,7 @@ class Comment(models.Model):
 class TicketHistory(models.Model):
     id = models.BigAutoField(primary_key=True)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='history')
-    previous_status = models.CharField(max_length=20, blank=True)
+    previous_status = models.CharField(max_length=20, blank=True, null=True)
     new_status = models.CharField(max_length=20)
     changed_at = models.DateTimeField(auto_now_add=True)
 
