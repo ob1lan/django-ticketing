@@ -56,6 +56,9 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        ordering = ['-created_at']
+    
     @property
     def total_time_spent(self):
         if not hasattr(self, '_cached_total_time'):
