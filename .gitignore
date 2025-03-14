@@ -26,4 +26,4 @@ ENV/
 
 # Migrations
 **/migrations/__pycache__/
-**/migrations/*.pyc
+**/migrations/

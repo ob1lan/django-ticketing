@@ -70,6 +70,31 @@ class Ticket(models.Model):
         return f"{self.unique_reference} - {self.title}"
 
 
+class Comment(models.Model):
+    """
+    Represents a comment on a ticket, with an author (User), message,
+    and timestamps. Each comment is tied to exactly one Ticket.
+    """
+    id = models.BigAutoField(primary_key=True)
+    ticket = models.ForeignKey(
+        Ticket, 
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        # For debugging/logging
+        return f"Comment {self.id} by {self.author} on {self.ticket}"
+
+
 class TicketHistory(models.Model):
     id = models.BigAutoField(primary_key=True)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='history')

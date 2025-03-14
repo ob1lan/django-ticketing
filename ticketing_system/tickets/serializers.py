@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Ticket, TicketHistory
+from .models import Ticket, TicketHistory, Comment
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -45,3 +45,24 @@ class TicketHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketHistory
         fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating and retrieving comments on a ticket.
+    """
+    author_name = serializers.ReadOnlyField(source='author.username')
+    # or 'author.email', depending on how you want to display the author
+
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'ticket',
+            'author',
+            'author_name',
+            'message',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'author', 'ticket', 'created_at', 'updated_at']
