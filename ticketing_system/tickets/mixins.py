@@ -5,6 +5,13 @@ class StaffOrCompanyFilterMixin:
     This assumes your objects have a `ticket` foreign key,
     and the `ticket` has `company`.
     """
+    
+    def filter_tickets_by_company(self, queryset):
+        user = self.request.user
+        if user.is_staff:
+            return queryset
+        else:
+            return queryset.filter(company=user.company)
 
     def filter_by_ticket_company(self, queryset, ticket_id_field='pk'):
         """

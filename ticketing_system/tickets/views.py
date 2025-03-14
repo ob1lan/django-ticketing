@@ -26,7 +26,7 @@ from .mixins import StaffOrCompanyFilterMixin
         OpenApiParameter(name="status", description="Filter by ticket status", required=False, type=str),
     ]
 )
-class TicketListCreateView(generics.ListCreateAPIView):
+class TicketListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -37,18 +37,11 @@ class TicketListCreateView(generics.ListCreateAPIView):
     ordering_fields = ['priority', 'status', 'created_at', 'updated_at']
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            # Staff can see all tickets
-            return Ticket.objects.all()
-        else:
-            # Non-staff can only see tickets for their own company
-            return Ticket.objects.filter(company=user.company)
+        queryset = Ticket.objects.all()
+        return self.filter_tickets_by_company(queryset)
 
     def perform_create(self, serializer):
         user = self.request.user
-        # Staff: allow picking company from the request
-        # Non-staff: force to the user's company
         if user.is_staff:
             serializer.save(created_by=user)
         else:
@@ -64,16 +57,13 @@ class TicketListCreateView(generics.ListCreateAPIView):
         404: {"description": "Ticket not found."}
     }
 )
-class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+class TicketRetrieveUpdateView(StaffOrCompanyFilterMixin, generics.RetrieveUpdateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Ticket.objects.all()
-        else:
-            return Ticket.objects.filter(company=user.company)
+        queryset = Ticket.objects.all()
+        return self.filter_tickets_by_company(queryset)
 
     def perform_update(self, serializer):
         user = self.request.user
