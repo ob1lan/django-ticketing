@@ -1,6 +1,6 @@
-# tickets/serializers.py
 from rest_framework import serializers
 from .models import Ticket, TicketHistory
+
 
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,6 +39,7 @@ class TicketSerializer(serializers.ModelSerializer):
             fields.pop('company', None)
 
         return fields
+
 
 class TicketHistorySerializer(serializers.ModelSerializer):
     class Meta:
