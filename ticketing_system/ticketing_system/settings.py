@@ -139,16 +139,17 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'ERROR',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'errors.log',
+            'filename': 'api_requests.log',
         },
     },
     'loggers': {
-        'django': {
+        'django.request': {
             'handlers': ['file'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': True,
         },
     },
 }
+

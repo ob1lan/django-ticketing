@@ -2,11 +2,17 @@ from django.contrib import admin
 from .models import Ticket, TicketHistory, Comment, TimeSpent
 
 
+class CommentInline(admin.TabularInline):
+    model = Comment
+    extra = 1 
+    
+
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
     list_display = ('id', 'unique_reference', 'title', 'company', 'status', 'priority', 'assignee')
     search_fields = ('unique_reference', 'title')
     list_filter = ('status', 'priority', 'company')
+    inlines = [CommentInline]
 
 
 @admin.register(TicketHistory)
