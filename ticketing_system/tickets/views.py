@@ -4,9 +4,19 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.exceptions import PermissionDenied
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from .models import Ticket, TicketHistory, Comment, TimeSpent
-from .serializers import TicketSerializer, TicketHistorySerializer, CommentSerializer, TimeSpentSerializer
+from .serializers import (
+    TicketSerializer,
+    TicketHistorySerializer,
+    CommentSerializer,
+    TimeSpentSerializer
+)
 from .filters import TicketFilter
+from .mixins import StaffOrCompanyFilterMixin
 
+
+# ----------------------------------------------------------------------------
+#  TICKETS
+# ----------------------------------------------------------------------------
 
 @extend_schema(
     description="Retrieve a list of tickets. Staff users see all tickets, while regular users see only tickets related to their company.",
@@ -21,7 +31,7 @@ class TicketListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = TicketFilter
-    
+
     # Optional DRF's ?search= queries
     search_fields = ['title', 'description']
     ordering_fields = ['priority', 'status', 'created_at', 'updated_at']
@@ -37,7 +47,7 @@ class TicketListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        # Staff: allow picking company from request
+        # Staff: allow picking company from the request
         # Non-staff: force to the user's company
         if user.is_staff:
             serializer.save(created_by=user)
@@ -85,29 +95,38 @@ class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             )
 
 
+# ----------------------------------------------------------------------------
+#  TICKET HISTORY
+# ----------------------------------------------------------------------------
+
 @extend_schema(
     description="Retrieve a list of status changes for a given ticket."
 )
-class TicketHistoryListView(generics.ListAPIView):
+class TicketHistoryListView(StaffOrCompanyFilterMixin, generics.ListAPIView):
+    """
+    GET: list all TicketHistory entries for a given ticket.
+    Staff sees all, non-staff sees only if ticket.company == user.company.
+    """
     serializer_class = TicketHistorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        ticket_id = self.kwargs['pk']
-        if user.is_staff:
-            return TicketHistory.objects.filter(ticket__id=ticket_id)
-        else:
-            return TicketHistory.objects.filter(
-                ticket__id=ticket_id,
-                ticket__company=user.company
-            )
+        # Start with all TicketHistory
+        queryset = TicketHistory.objects.all()
+        # Use the mixin to filter by ticket__id and staff vs. company
+        queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
+        # Order by changed_at or your preferred field
+        return queryset.order_by('-changed_at')
 
+
+# ----------------------------------------------------------------------------
+#  COMMENTS
+# ----------------------------------------------------------------------------
 
 @extend_schema(
     description="Retrieve a list of comments for a given ticket or create a new comment."
 )
-class TicketCommentListCreateView(generics.ListCreateAPIView):
+class TicketCommentListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView):
     """
     - GET: list all comments for a given ticket
     - POST: create a new comment on that ticket
@@ -116,50 +135,35 @@ class TicketCommentListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Return comments for the given ticket, applying the same
-        company-based visibility logic as TicketListCreateView
-        """
-        user = self.request.user
-        ticket_id = self.kwargs['pk']  # The ticket's UUID from the URL
-        if user.is_staff:
-            # Staff can see all comments for this ticket
-            return Comment.objects.filter(ticket__id=ticket_id)
-        else:
-            # Non-staff must belong to the ticket's company
-            return Comment.objects.filter(
-                ticket__id=ticket_id,
-                ticket__company=user.company
-            )
+        queryset = Comment.objects.all()
+        queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
+        # Optionally order by created_at
+        return queryset.order_by('created_at')
 
     def perform_create(self, serializer):
         """
         Ties the new comment to the specified ticket and the request.user.
         """
-        ticket_id = self.kwargs['pk']
         user = self.request.user
+        ticket_id = self.kwargs['pk']
 
-        # First, get the ticket if user has permission
+        # Check the ticket exists and belongs to user.company (unless staff)
         try:
             if user.is_staff:
                 ticket = Ticket.objects.get(id=ticket_id)
             else:
                 ticket = Ticket.objects.get(id=ticket_id, company=user.company)
         except Ticket.DoesNotExist:
-            # This will raise a 404 if ticket doesn't exist or user has no access
             raise generics.exceptions.NotFound("Ticket not found or you don't have permission.")
 
         # Now create the comment
-        serializer.save(
-            author=user,
-            ticket=ticket
-        )
+        serializer.save(author=user, ticket=ticket)
 
 
 @extend_schema(
     description="Retrieve a single comment, update it, or delete it."
 )
-class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class TicketCommentRetrieveUpdateDestroyView(StaffOrCompanyFilterMixin, generics.RetrieveUpdateDestroyAPIView):
     """
     - GET a single comment
     - PUT/PATCH to edit it (maybe only staff or the original author)
@@ -167,22 +171,18 @@ class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     """
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     lookup_url_kwarg = 'comment_id'
     lookup_field = 'id'
 
     def get_queryset(self):
-        user = self.request.user
-        ticket_id = self.kwargs['pk']
+        queryset = Comment.objects.all()
+        # Filter by the ticket's UUID (pk) using the mixin
+        queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
+
+        # Also filter by the specific comment ID
         comment_id = self.kwargs['comment_id']
-        if user.is_staff:
-            return Comment.objects.filter(id=comment_id, ticket__id=ticket_id)
-        else:
-            return Comment.objects.filter(
-                id=comment_id,
-                ticket__id=ticket_id,
-                ticket__company=user.company
-            )
+        return queryset.filter(id=comment_id)
 
     def perform_update(self, serializer):
         # Optionally enforce that only the 'author' or staff can edit
@@ -200,26 +200,22 @@ class TicketCommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
         instance.delete()
 
 
+# ----------------------------------------------------------------------------
+#  TIME SPENT
+# ----------------------------------------------------------------------------
+
 @extend_schema(
     description="Retrieve a list of time entries for a given ticket or create a new time entry."
 )
-class TimeSpentListCreateView(generics.ListCreateAPIView):
+class TimeSpentListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView):
     serializer_class = TimeSpentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        ticket_id = self.kwargs['pk']  # the ticket's UUID from URL
-
-        if user.is_staff:
-            # staff can see all time entries for the given ticket
-            return TimeSpent.objects.filter(ticket__id=ticket_id)
-        else:
-            # non-staff can only see time entries for tickets belonging to their company
-            return TimeSpent.objects.filter(
-                ticket__id=ticket_id,
-                ticket__company=user.company
-            )
+        queryset = TimeSpent.objects.all()
+        # Use the mixin to filter by staff vs. non-staff
+        queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
+        return queryset.order_by('-created_at')
 
     def perform_create(self, serializer):
         # Only staff can create time entries
@@ -227,37 +223,28 @@ class TimeSpentListCreateView(generics.ListCreateAPIView):
             raise PermissionDenied("Only staff can log time.")
 
         ticket_id = self.kwargs['pk']
-        # verify ticket belongs to staff? staff can see all tickets anyway, but let's fetch:
-        ticket = Ticket.objects.get(id=ticket_id)
-        serializer.save(
-            ticket=ticket,
-            operator=self.request.user
-        )
+        ticket = Ticket.objects.get(id=ticket_id)  # staff can see all tickets
+        serializer.save(ticket=ticket, operator=self.request.user)
 
 
 @extend_schema(
     description="Retrieve a single time entry, update it, or delete it."
 )
-class TimeSpentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class TimeSpentRetrieveUpdateDestroyView(StaffOrCompanyFilterMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TimeSpentSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     lookup_url_kwarg = 'time_id'
     lookup_field = 'id'
 
     def get_queryset(self):
-        user = self.request.user
-        ticket_id = self.kwargs['pk']
-        time_id = self.kwargs['time_id']
+        queryset = TimeSpent.objects.all()
+        # Filter by the ticket's UUID (pk) using the mixin
+        queryset = self.filter_by_ticket_company(queryset, ticket_id_field='pk')
 
-        if user.is_staff:
-            return TimeSpent.objects.filter(id=time_id, ticket__id=ticket_id)
-        else:
-            return TimeSpent.objects.filter(
-                id=time_id,
-                ticket__id=ticket_id,
-                ticket__company=user.company
-            )
+        # Also filter by the specific time entry ID
+        time_id = self.kwargs['time_id']
+        return queryset.filter(id=time_id)
 
     def perform_update(self, serializer):
         if not self.request.user.is_staff:
