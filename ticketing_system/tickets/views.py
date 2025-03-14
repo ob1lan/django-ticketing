@@ -2,13 +2,20 @@ from rest_framework import generics, permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.exceptions import PermissionDenied
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from .models import Ticket, TicketHistory, Comment, TimeSpent
 from .serializers import TicketSerializer, TicketHistorySerializer, CommentSerializer, TimeSpentSerializer
 from .filters import TicketFilter
 
 
-@extend_schema(description="List and create tickets")
+@extend_schema(
+    description="Retrieve a list of tickets. Staff users see all tickets, while regular users see only tickets related to their company.",
+    parameters=[
+        OpenApiParameter(name="search", description="Search by title or description", required=False, type=str),
+        OpenApiParameter(name="priority", description="Filter by ticket priority", required=False, type=str),
+        OpenApiParameter(name="status", description="Filter by ticket status", required=False, type=str),
+    ]
+)
 class TicketListCreateView(generics.ListCreateAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
