@@ -46,7 +46,13 @@ class TicketListCreateView(generics.ListCreateAPIView):
 
 
 @extend_schema(
-    description="Retrieve or update a single ticket. Staff users can see all tickets, while regular users see only tickets related to their company."
+    description="Retrieve or update a single ticket. Staff users can see all tickets, while regular users see only their company's tickets.",
+    responses={
+        200: TicketSerializer,
+        400: {"description": "Bad request, validation error."},
+        403: {"description": "Permission denied."},
+        404: {"description": "Ticket not found."}
+    }
 )
 class TicketRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = TicketSerializer
