@@ -10,7 +10,7 @@ class Ticket(models.Model):
         default=uuid.uuid4,
         editable=False
     )
-    
+
     PRIORITY_CHOICES = (
         ('low', 'Low'),
         ('medium', 'Medium'),
@@ -50,7 +50,7 @@ class Ticket(models.Model):
     )
     company = models.ForeignKey(
         'companies.Company',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     unique_reference = models.CharField(max_length=8, unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

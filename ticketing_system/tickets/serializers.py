@@ -3,6 +3,7 @@ from .models import Ticket, TicketHistory, Comment, TimeSpent
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    company_logo = serializers.ReadOnlyField(source='company.logo')
     class Meta:
         model = Ticket
         fields = [
@@ -19,6 +20,7 @@ class TicketSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'total_time_spent',
+            'company_logo',
         ]
         read_only_fields = [
             'id',
@@ -26,7 +28,8 @@ class TicketSerializer(serializers.ModelSerializer):
             'unique_reference',
             'created_at',
             'updated_at',
-            'total_time_spent'
+            'total_time_spent',
+            'company_logo',
         ]
 
     def get_fields(self):
