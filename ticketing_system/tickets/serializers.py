@@ -56,8 +56,12 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     Serializer for creating and retrieving comments on a ticket.
     """
-    author_name = serializers.ReadOnlyField(source='author.username')
-    # or 'author.email', depending on how you want to display the author
+    author_username = serializers.ReadOnlyField(source='author.email')
+    author_role = serializers.ReadOnlyField(source='author.role')
+    author_fullName = serializers.SerializerMethodField( method_name='get_author_fullName')
+    def get_author_fullName(self, obj):
+        return obj.author.first_name + ' ' + obj.author.last_name
+    
 
     class Meta:
         model = Comment
@@ -65,12 +69,14 @@ class CommentSerializer(serializers.ModelSerializer):
             'id',
             'ticket',
             'author',
-            'author_name',
+            'author_username',
+            'author_fullName',
+            'author_role',
             'message',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'author', 'ticket', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'author', 'author_fullName', 'author_role', 'author_username', 'ticket', 'created_at', 'updated_at']
 
 
 class TimeSpentSerializer(serializers.ModelSerializer):

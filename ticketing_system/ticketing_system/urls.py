@@ -16,11 +16,14 @@ extended_auth_views = extend_schema_view(
     user_detail=extend_schema(description="Get details of the currently logged-in user."),
 )(UserViewSet)
 
+AUTH_PATH = 'auth/'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.authtoken')),
+    path(AUTH_PATH, include('djoser.urls')),
+    path(AUTH_PATH, include('djoser.urls.authtoken')),
+    path(AUTH_PATH, include('djoser.urls.jwt')),
     path('accounts/', include('accounts.urls')),
     path('companies/', include('companies.urls')),
     path('tickets/', include('tickets.urls')),

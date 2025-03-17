@@ -15,7 +15,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'id', 'email', 'username',
             'first_name', 'last_name', 'phone_number',
             'company',  # admin can select any company for a user
-            'is_staff', 'is_active', 'password',
+            'is_staff', 'is_active', 'role', 'password',
         ]
         
     def validate_company(self, value):

@@ -8,7 +8,7 @@ class StaffOrCompanyFilterMixin:
     
     def filter_tickets_by_company(self, queryset):
         user = self.request.user
-        if user.is_staff:
+        if user.is_staff or user.role == 'admin':
             return queryset
         else:
             return queryset.filter(company=user.company)
@@ -27,7 +27,7 @@ class StaffOrCompanyFilterMixin:
         # Start by filtering only rows referencing this specific ticket ID
         queryset = queryset.filter(ticket__id=ticket_uuid)
 
-        if not user.is_staff:
+        if not user.is_staff and user.role != 'admin':
             # Further filter: the ticket's company must match the user's company
             queryset = queryset.filter(ticket__company=user.company)
 

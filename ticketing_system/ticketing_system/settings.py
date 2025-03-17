@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+DEBUG = os.getenv("DEBUG")
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 
 # Application definition
@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'djoser',
     'django_filters',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'drf_spectacular',
     
     # Local apps
@@ -107,6 +108,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -139,20 +141,33 @@ SPECTACULAR_SETTINGS = {
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
 }
 
+# Logging configuration
+LOGGING_CLASS = 'logging.FileHandler'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
+            'class': LOGGING_CLASS,
             'filename': 'errors.log',
+        },
+        'file_info': {
+            'level': 'INFO',
+            'class': LOGGING_CLASS,
+            'filename': 'info.log',
+        },
+        'file_debug': {
+            'level': 'DEBUG',
+            'class': LOGGING_CLASS,
+            'filename': 'debug.log',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
-            'level': 'ERROR',
+            'handlers': ['file', 'file_info', 'file_debug'],
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
