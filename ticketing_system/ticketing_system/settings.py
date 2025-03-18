@@ -102,6 +102,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DJOSER = {
     "USER_ID_FIELD": "id",
     "LOGIN_FIELD": "email",
+    "SERIALIZERS": {
+        "token_obtain_pair": "accounts.serializers.MyTokenObtainPairSerializer",
+    },
 }
 
 REST_FRAMEWORK = {

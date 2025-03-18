@@ -43,7 +43,7 @@ class TicketListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView
     def perform_create(self, serializer):
         user = self.request.user
         if user.is_staff:
-            serializer.save(created_by=user)
+            serializer.save(created_by=user, company=self.request.company)
         else:
             serializer.save(created_by=user, company=user.company)
 

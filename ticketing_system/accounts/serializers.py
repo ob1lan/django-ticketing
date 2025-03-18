@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import User
 from companies.models import Company
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 class AdminUserSerializer(serializers.ModelSerializer):
     """
@@ -57,3 +59,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'company',
         ]
         read_only_fields = ['email', 'company']
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Add custom claims
+        token['username'] = user.username
+        # Assuming you have a 'role' field or a method to get the user's role:
+        token['role'] = user.role if hasattr(user, 'role') else 'user'
+        return token
