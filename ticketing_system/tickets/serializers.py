@@ -7,9 +7,12 @@ class TicketSerializer(serializers.ModelSerializer):
     created_by_fullname = serializers.SerializerMethodField( method_name='get_created_by_fullname')
     def get_created_by_fullname(self, obj):
         return obj.created_by.first_name + ' ' + obj.created_by.last_name
+    # If assignee is not set, assignee_fullname will be None
     assignee_fullname = serializers.SerializerMethodField( method_name='get_assignee_fullname')
     def get_assignee_fullname(self, obj):
-        return obj.assignee.first_name + ' ' + obj.assignee.last_name
+        if obj.assignee:
+            return obj.assignee.first_name + ' ' + obj.assignee.last_name
+        return None
     class Meta:
         model = Ticket
         fields = [

@@ -10,6 +10,7 @@ dist/
 build/
 .env
 *.log
+**/*.log
 
 # -----------------------
 #  Virtual Environments
