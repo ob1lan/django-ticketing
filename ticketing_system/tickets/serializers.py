@@ -4,6 +4,9 @@ from .models import Ticket, TicketHistory, Comment, TimeSpent
 
 class TicketSerializer(serializers.ModelSerializer):
     company_logo = serializers.ReadOnlyField(source='company.logo')
+    created_by_fullname = serializers.SerializerMethodField( method_name='get_created_by_fullname')
+    def get_created_by_fullname(self, obj):
+        return obj.created_by.first_name + ' ' + obj.created_by.last_name
     class Meta:
         model = Ticket
         fields = [
@@ -16,6 +19,7 @@ class TicketSerializer(serializers.ModelSerializer):
             'assignee',
             'company',
             'created_by',
+            'created_by_fullname',
             'unique_reference',
             'created_at',
             'updated_at',
@@ -25,6 +29,7 @@ class TicketSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'created_by',
+            'created_by_fullName',
             'unique_reference',
             'created_at',
             'updated_at',
@@ -81,6 +86,9 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class TimeSpentSerializer(serializers.ModelSerializer):
     operator_name = serializers.ReadOnlyField(source='operator.username')
+    operator_fullname = serializers.SerializerMethodField( method_name='get_operator_fullname')
+    def get_operator_fullname(self, obj):
+        return obj.operator.first_name + ' ' + obj.operator.last_name
 
     class Meta:
         model = TimeSpent
@@ -89,8 +97,9 @@ class TimeSpentSerializer(serializers.ModelSerializer):
             'ticket',
             'operator',
             'operator_name',
+            'operator_fullname',
             'minutes',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'ticket', 'operator', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'ticket', 'operator', 'operator_fullname', 'created_at', 'updated_at']

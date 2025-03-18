@@ -14,7 +14,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'username',
             'first_name', 'last_name', 'phone_number',
-            'company',  # admin can select any company for a user
+            'company',
             'is_staff', 'is_active', 'role', 'password',
         ]
         
@@ -29,8 +29,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
         else:
-            # Optionally set a default password if none is provided
-            user.set_password('changeme123')
+            raise KeyError("Password is required.")
         user.save()
         return user
 
