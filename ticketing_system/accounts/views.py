@@ -1,11 +1,16 @@
 from rest_framework import generics, permissions
+from rest_framework_simplejwt.views import TokenObtainPairView
 from drf_spectacular.utils import extend_schema
 from .models import User
 from .serializers import (
     AdminUserSerializer,
-    UserProfileSerializer
+    UserProfileSerializer,
+    MyTokenObtainPairSerializer
 )
 
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 @extend_schema(
     description="Allows staff (is_staff=True) to list all users and create new ones."
