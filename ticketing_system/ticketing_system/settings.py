@@ -118,6 +118,7 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.MyTokenObtainPairSerializer",
 }
 
 REST_FRAMEWORK = {

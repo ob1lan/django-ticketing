@@ -7,7 +7,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView
 )
 from djoser.views import UserViewSet
-from accounts.views import MyTokenObtainPairView
 
 # Extend Djoser views with schema descriptions
 extended_auth_views = extend_schema_view(
@@ -25,7 +24,6 @@ urlpatterns = [
     path(AUTH_PATH, include('djoser.urls')),
     path(AUTH_PATH, include('djoser.urls.authtoken')),
     path(AUTH_PATH, include('djoser.urls.jwt')),
-    path("auth/jwt/create/", MyTokenObtainPairView.as_view(), name="jwt-create"),
     path('accounts/', include('accounts.urls')),
     path('companies/', include('companies.urls')),
     path('tickets/', include('tickets.urls')),
