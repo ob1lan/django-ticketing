@@ -16,7 +16,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'username',
             'first_name', 'last_name', 'phone_number',
-            'company',
+            'company', 'avatar',
             'is_staff', 'is_active', 'role', 'password',
         ]
         
@@ -57,8 +57,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'last_name',
             'phone_number',
             'company',
+            'avatar',
         ]
-        read_only_fields = ['email', 'company']
+        read_only_fields = ['company', 'username']
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

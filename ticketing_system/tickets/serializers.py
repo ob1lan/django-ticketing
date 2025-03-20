@@ -71,6 +71,7 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     author_username = serializers.ReadOnlyField(source='author.email')
     author_role = serializers.ReadOnlyField(source='author.role')
+    author_avatar = serializers.ReadOnlyField(source='author.avatar')
     author_fullName = serializers.SerializerMethodField( method_name='get_author_fullName')
     def get_author_fullName(self, obj):
         return obj.author.first_name + ' ' + obj.author.last_name
@@ -84,12 +85,13 @@ class CommentSerializer(serializers.ModelSerializer):
             'author',
             'author_username',
             'author_fullName',
+            'author_avatar',
             'author_role',
             'message',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'author', 'author_fullName', 'author_role', 'author_username', 'ticket', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'author', 'author_fullName', 'author_role', 'author_avatar', 'author_username', 'ticket', 'created_at', 'updated_at']
 
 
 class TimeSpentSerializer(serializers.ModelSerializer):
