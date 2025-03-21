@@ -9,7 +9,9 @@ class TicketFilter(django_filters.FilterSet):
     You can filter by priority, status, type, or do partial matches on title.
     """
     title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
+    status = django_filters.MultipleChoiceFilter(field_name="status", choices=Ticket.STATUS_CHOICES)
 
+    
     class Meta:
         model = Ticket
         fields = {
