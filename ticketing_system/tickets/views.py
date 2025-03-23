@@ -40,6 +40,12 @@ class TicketListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView
     def get_queryset(self):
         queryset = Ticket.objects.all()
         return self.filter_tickets_by_company(queryset)
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return TicketSerializer
+        return TicketSerializerLight
+
 
     def perform_create(self, serializer):
         user = self.request.user
