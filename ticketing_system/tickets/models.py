@@ -105,14 +105,31 @@ class Comment(models.Model):
 
 
 class TicketHistory(models.Model):
+    EVENT_CHOICES = [
+        ("status_change", "Status Change"),
+        ("created", "Created"),
+        ("updated", "Updated"),
+        ("resolved", "Resolved"),
+        ("closed", "Closed"),
+        ("comment", "Comment Added"),
+    ]
+
     id = models.BigAutoField(primary_key=True)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='history')
+    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES, default='updated')
+    message = models.TextField(blank=True, null=True)
     previous_status = models.CharField(max_length=20, blank=True, null=True)
-    new_status = models.CharField(max_length=20)
+    new_status = models.CharField(max_length=20, blank=True, null=True)
     changed_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
-        return f"{self.ticket.unique_reference} | {self.previous_status} -> {self.new_status}"
+        return f"{self.ticket.unique_reference} | {self.event_type} | {self.changed_at}"
 
 
 class TimeSpent(models.Model):

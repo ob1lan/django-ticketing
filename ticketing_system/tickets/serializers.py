@@ -2,6 +2,62 @@ from rest_framework import serializers
 from .models import Ticket, TicketHistory, Comment, TimeSpent
 
 
+class TicketSerializerLight(serializers.ModelSerializer):
+    company_logo = serializers.ReadOnlyField(source='company.logo')
+    created_by_fullname = serializers.SerializerMethodField( method_name='get_created_by_fullname')
+    def get_created_by_fullname(self, obj):
+        return obj.created_by.first_name + ' ' + obj.created_by.last_name
+    # If assignee is not set, assignee_fullname will be None
+    assignee_fullname = serializers.SerializerMethodField( method_name='get_assignee_fullname')
+    def get_assignee_fullname(self, obj):
+        if obj.assignee:
+            return obj.assignee.first_name + ' ' + obj.assignee.last_name
+        return None
+    class Meta:
+        model = Ticket
+        fields = [
+            'id',
+            'title',
+            # 'description', # Hide description
+            'priority',
+            'type',
+            'status',
+            'assignee',
+            'assignee_fullname',
+            'company',
+            'created_by',
+            'created_by_fullname',
+            'unique_reference',
+            'created_at',
+            'updated_at',
+            'total_time_spent',
+            'company_logo',
+        ]
+        read_only_fields = [
+            'id',
+            'created_by',
+            'created_by_fullName',
+            'unique_reference',
+            'created_at',
+            'updated_at',
+            'assignee_fullname',
+            'total_time_spent',
+            'company_logo',
+        ]
+
+    def get_fields(self):
+        """
+        Hide the 'company' field from non-staff users so they don't even see it in
+        the browsable API or have the option to supply it.
+        """
+        fields = super().get_fields()
+        request = self.context.get('request')
+
+        if request and not request.user.is_staff:
+            fields.pop('company', None)
+
+        return fields
+
 class TicketSerializer(serializers.ModelSerializer):
     company_logo = serializers.ReadOnlyField(source='company.logo')
     created_by_fullname = serializers.SerializerMethodField( method_name='get_created_by_fullname')

@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from .models import Ticket, TicketHistory, Comment, TimeSpent
 from .serializers import (
     TicketSerializer,
+    TicketSerializerLight,
     TicketHistorySerializer,
     CommentSerializer,
     TimeSpentSerializer
@@ -27,7 +28,7 @@ from .mixins import StaffOrCompanyFilterMixin
     ]
 )
 class TicketListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView):
-    serializer_class = TicketSerializer
+    serializer_class = TicketSerializerLight
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = TicketFilter
@@ -43,9 +44,16 @@ class TicketListCreateView(StaffOrCompanyFilterMixin, generics.ListCreateAPIView
     def perform_create(self, serializer):
         user = self.request.user
         if user.is_staff:
-            serializer.save(created_by=user)
+            ticket = serializer.save(created_by=user)
         else:
-            serializer.save(created_by=user, company=user.company)
+            ticket = serializer.save(created_by=user, company=user.company)
+
+        TicketHistory.objects.create(
+            ticket=ticket,
+            event_type="created",
+            message="Ticket created",
+            user=user
+        )
 
 
 @extend_schema(
@@ -67,21 +75,27 @@ class TicketRetrieveUpdateView(StaffOrCompanyFilterMixin, generics.RetrieveUpdat
 
     def perform_update(self, serializer):
         user = self.request.user
-        ticket_before_update = self.get_object()
-        old_status = ticket_before_update.status
+        ticket = self.get_object()
+        old_status = ticket.status
 
-        # Same logic: staff can change company, non-staff is forced to use own company
-        if user.is_staff:
-            updated_ticket = serializer.save()
-        else:
-            updated_ticket = serializer.save(company=user.company)
+        updated_ticket = serializer.save(company=user.company if not user.is_staff else ticket.company)
 
-        new_status = updated_ticket.status
-        if old_status != new_status:
+        if old_status != updated_ticket.status:
             TicketHistory.objects.create(
                 ticket=updated_ticket,
+                event_type="status_change",
                 previous_status=old_status,
-                new_status=new_status
+                new_status=updated_ticket.status,
+                message="Status changed",
+                user=user
+            )
+        else:
+            # Log a generic update event
+            TicketHistory.objects.create(
+                ticket=updated_ticket,
+                event_type="updated",
+                message="Ticket updated",
+                user=user
             )
 
 
@@ -163,6 +177,12 @@ class TicketCommentListCreateView(StaffOrCompanyFilterMixin, generics.ListCreate
 
         # Now create the comment
         serializer.save(author=user, ticket=ticket)
+        
+        TicketHistory.objects.create(
+            ticket=ticket,
+            event_type="comment",
+            message=f"{user.get_full_name() or user.email} commented on the ticket."
+        )
 
 
 @extend_schema(
