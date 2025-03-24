@@ -87,14 +87,33 @@ class TicketRetrieveUpdateView(StaffOrCompanyFilterMixin, generics.RetrieveUpdat
         updated_ticket = serializer.save(company=user.company if not user.is_staff else ticket.company)
 
         if old_status != updated_ticket.status:
-            TicketHistory.objects.create(
-                ticket=updated_ticket,
-                event_type="status_change",
-                previous_status=old_status,
-                new_status=updated_ticket.status,
-                message="Status changed",
-                user=user
-            )
+            if updated_ticket.status == "closed":
+                TicketHistory.objects.create(
+                    ticket=updated_ticket,
+                    event_type="closed",
+                    previous_status=old_status,
+                    new_status=updated_ticket.status,
+                    message="Ticket closed",
+                    user=user
+                )
+            elif updated_ticket.status == "resolved":
+                TicketHistory.objects.create(
+                    ticket=updated_ticket,
+                    event_type="resolved",
+                    previous_status=old_status,
+                    new_status=updated_ticket.status,
+                    message="Ticket resolved",
+                    user=user
+                )
+            else:
+                TicketHistory.objects.create(
+                    ticket=updated_ticket,
+                    event_type="status_change",
+                    previous_status=old_status,
+                    new_status=updated_ticket.status,
+                    message="Status changed",
+                    user=user
+                )
         else:
             # Log a generic update event
             TicketHistory.objects.create(

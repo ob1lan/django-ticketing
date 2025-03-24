@@ -114,11 +114,24 @@ class TicketSerializer(serializers.ModelSerializer):
 
         return fields
 
-
 class TicketHistorySerializer(serializers.ModelSerializer):
+    user_fullname = serializers.SerializerMethodField( method_name='get_user_fullname')
+    def get_user_fullname(self, obj):
+        if obj.user:
+            return obj.user.first_name + ' ' + obj.user.last_name
     class Meta:
         model = TicketHistory
-        fields = '__all__'
+        fields = [
+            'id',
+            'event_type',
+            'message',
+            'previous_status',
+            'new_status',
+            'changed_at',
+            'ticket',
+            'user',
+            'user_fullname',
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
