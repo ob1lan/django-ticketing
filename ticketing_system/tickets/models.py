@@ -124,6 +124,7 @@ class TicketHistory(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name='ticket_history',
     )
 
     def __str__(self):

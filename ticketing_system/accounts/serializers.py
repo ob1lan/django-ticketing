@@ -21,6 +21,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
         ]
         
     def validate_company(self, value):
+        if value is None:
+            return value
         if not Company.objects.filter(id=value.id).exists():
             raise serializers.ValidationError("Company does not exist.")
         return value
