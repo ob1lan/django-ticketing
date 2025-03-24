@@ -206,7 +206,8 @@ class TicketCommentListCreateView(StaffOrCompanyFilterMixin, generics.ListCreate
         TicketHistory.objects.create(
             ticket=ticket,
             event_type="comment",
-            message=f"{user.get_full_name() or user.email} commented on the ticket."
+            message="New comment on the ticket",
+            user=user
         )
 
 
