@@ -50,7 +50,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     For a regular user to view/update their own data,
     but can't change email/company (depending on your rules).
     """
-
+    company_name = serializers.CharField(source="company.name", read_only=True)
+    
     class Meta:
         model = User
         fields = [
@@ -61,9 +62,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'last_name',
             'phone_number',
             'company',
+            'company_name',
             'avatar',
         ]
-        read_only_fields = ['company', 'username']
+        read_only_fields = ['company', 'company_name', 'username']
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
