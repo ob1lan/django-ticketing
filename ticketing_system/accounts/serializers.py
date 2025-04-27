@@ -9,7 +9,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
     For staff/admin usage. They can create users, set passwords, assign companies, etc.
     """
     password = serializers.CharField(write_only=True, required=False)
-    
+    company_name = serializers.CharField(source="company.name", read_only=True)
+
 
     class Meta:
         model = User
@@ -17,7 +18,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'id', 'email', 'username',
             'first_name', 'last_name', 'phone_number',
             'company', 'avatar',
-            'is_staff', 'is_active', 'role', 'password',
+            'is_staff', 'is_active', 'role', 'password', 'company_name',
         ]
         
     def validate_company(self, value):
@@ -49,6 +50,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     For a regular user to view/update their own data,
     but can't change email/company (depending on your rules).
     """
+
     class Meta:
         model = User
         fields = [
